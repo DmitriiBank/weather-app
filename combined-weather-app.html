@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #0a081f 0%, #1a165a 100%);
+      font-family: "Rubik", sans-serif;
+      margin: 0 auto;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    #app {
+      width: 480px;
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      min-height: 480px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    #root {
+      height: 100%;
+      width: 100%;
+    }
+
+    .popup {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease-in-out;
+      z-index: 100;
+    }
+
+    .popup.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .popup-content {
+      background: #fff;
+      padding: 30px;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 400px;
+      position: relative;
+    }
+
+    .popup-close {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      cursor: pointer;
+      font-size: 24px;
+      color: #8781c5;
+      transition: transform 0.2s;
+    }
+
+    .popup-close:hover {
+      transform: rotate(90deg);
+    }
+
+    .form {
+      width: 100%;
+    }
+
+    .form-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .form-input {
+      border: 2px solid #e0e0e0;
+      color: #333;
+      background: #fff;
+      outline: none;
+      font-size: 16px;
+      width: 100%;
+      padding: 12px 15px;
+      border-radius: 8px;
+      transition: border-color 0.3s;
+    }
+
+    .form-input:focus {
+      border-color: #8781c5;
+    }
+
+    .form-submit {
+      background: #8781c5;
+      color: #fff;
+      padding: 0 20px;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      outline: none;
+      font-weight: 500;
+      transition: background 0.3s;
+    }
+
+    .form-submit:hover {
+      background: #6a65a3;
+    }
+
+    .form-input::placeholder {
+      color: #aaa;
+    }
+
+    .loader {
+      width: 60px;
+      height: 60px;
+    }
+
+    .container {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .container:before {
+      content: "";
+      display: block;
+      background: linear-gradient(135deg, #3a2b7a 0%, #8781c5 100%);
+      width: 100%;
+      height: 52%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 0;
+      border-radius: 0 0 20px 20px;
+    }
+
+    .container.is-day:before {
+      background: linear-gradient(135deg, #4a6bff 0%, #87b1ff 100%);
+    }
+
+    .top {
+      position: relative;
+      padding: 25px;
+      color: white;
+    }
+
+    .city-info {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .top-left {
+      max-width: 60%;
+    }
+
+    .city {
+      width: max-content;
+    }
+
+    .city-subtitle {
+      font-size: 16px;
+      line-height: 20px;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 5px;
+    }
+
+    .city-title {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 28px;
+      line-height: 36px;
+      color: #ffffff;
+      padding: 5px 15px;
+      margin-top: 5px;
+      cursor: pointer;
+      width: max-content;
+      transition: all 0.3s;
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .city-title:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .city-info__subtitle {
+      font-size: 14px;
+      line-height: 18px;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 5px;
+    }
+
+    .city-info__title {
+      font-weight: 600;
+      font-size: 60px;
+      line-height: 70px;
+      color: #ffffff;
+      position: relative;
+    }
+
+    .city-info__title:after {
+      content: "°C";
+      font-size: 30px;
+      position: absolute;
+      top: 10px;
+      margin-left: 5px;
+    }
+
+    .description {
+      font-weight: 500;
+      font-size: 22px;
+      line-height: 30px;
+      color: #ffffff;
+      margin-top: 10px;
+    }
+    
+    .icon {
+      width: 80px;
+      height: 80px;
+      filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.2));
+    }
+
+    .property {
+      width: 48%;
+      display: flex;
+      align-items: center;
+      background: #fff;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      margin-bottom: 15px;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .property:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .property-icon {
+      width: 40px;
+      height: 40px;
+      margin-right: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5f5ff;
+      border-radius: 10px;
+      color: #8781c5;
+      font-size: 20px;
+    }
+
+    .property-info__value {
+      font-weight: 600;
+      font-size: 18px;
+      line-height: 22px;
+      color: #333;
+    }
+
+    .property-info__description {
+      font-weight: 400;
+      font-size: 13px;
+      line-height: 16px;
+      color: #888;
+      margin-top: 3px;
+      text-transform: capitalize;
+    }
+
+    #properties {
+      position: relative;
+      z-index: 1;
+      padding: 20px;
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+
+    .weather-icon {
+      font-size: 24px;
+      margin-right: 8px;
+    }
+
+    @media (max-width: 500px) {
+      #app {
+        width: 95%;
+        min-height: auto;
+      }
+
+      .property {
+        width: 100%;
+      }
+
+      .city-info {
+        flex-direction: column;
+      }
+
+      .top-left, .top-right {
+        max-width: 100%;
+        text-align: center;
+      }
+
+      .top-right {
+        margin-top: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="root">
+    <img class="loader" src="https://cdnjs.cloudflare.com/ajax/libs/galleriffic/2.0.1/css/loader.gif" alt="loader" />
+  </div>
+
+  <div class="popup" id="popup">
+    <div class="popup-content">
+      <div class="popup-close" id="close">
+        <i class="fas fa-times"></i>
+      </div>
+      <form action="GET" class="form" id="form">
+        <div class="form-group">
+          <input
+                  type="text"
+                  value=""
+                  name="city"
+                  class="form-input"
+                  id="text-input"
+                  placeholder="Enter city name"
+                  required
+          />
+          <input
+                  type="submit"
+                  class="form-submit"
+                  id="submit-button"
+                  value="Search"
+          />
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  const BASE_URL = 'http://api.weatherapi.com/v1/current.json?key=';
+  const API_KEY = '4bb45cff9f9243d7978193941251004';
+
+  const root = document.getElementById('root');
+
+  let store = {
+    city: "Moscow",
+    temp_c: 0,
+    observationTime: "00:00 AM",
+    isDay: "yes",
+    condition: "",
+    properties: {
+      cloud: {},
+      humidity: {},
+      windSpeed: {},
+      pressure: {},
+      uvIndex: {},
+      visibility: {},
+    },
+  };
+
+  const getWeatherIcon = (condition) => {
+    const value = condition.toLowerCase();
+
+    if (value.includes("sunny") || value.includes("clear")) {
+      return '<i class="fas fa-sun weather-icon" style="color: #FFD700;"></i>';
+    } else if (value.includes("cloud")) {
+      return '<i class="fas fa-cloud weather-icon" style="color: #BDC3C7;"></i>';
+    } else if (value.includes("rain")) {
+      return '<i class="fas fa-cloud-rain weather-icon" style="color: #3498DB;"></i>';
+    } else if (value.includes("snow")) {
+      return '<i class="far fa-snowflake weather-icon" style="color: #AED6F1;"></i>';
+    } else if (value.includes("thunder") || value.includes("storm")) {
+      return '<i class="fas fa-bolt weather-icon" style="color: #F1C40F;"></i>';
+    } else if (value.includes("fog") || value.includes("mist")) {
+      return '<i class="fas fa-smog weather-icon" style="color: #D5DBDB;"></i>';
+    } else {
+      return '<i class="fas fa-cloud-sun weather-icon" style="color: #F39C12;"></i>';
+    }
+  };
+
+  const getPropertyIcon = (property) => {
+    switch(property) {
+      case 'cloud':
+        return '<i class="fas fa-cloud"></i>';
+      case 'humidity':
+        return '<i class="fas fa-tint"></i>';
+      case 'wind speed':
+        return '<i class="fas fa-wind"></i>';
+      case 'pressure':
+        return '<i class="fas fa-tachometer-alt"></i>';
+      case 'uv Index':
+        return '<i class="fas fa-sun"></i>';
+      case 'visibility':
+        return '<i class="fas fa-eye"></i>';
+      default:
+        return '<i class="fas fa-info-circle"></i>';
+    }
+  };
+
+  const fetchData = async () => {
+    try {
+      const result = await fetch(BASE_URL + API_KEY + `&q=${store.city}&aqi=no`);
+      const data = await result.json();
+
+      const {
+        current: {
+          cloud,
+          temp_c,
+          humidity,
+          last_updated: observationTime,
+          pressure_mb: pressure,
+          uv: uvIndex,
+          vis_km: visibility,
+          is_day: isDay,
+          condition,
+          wind_kph: windSpeed,
+        },
+        location: {name},
+      } = data;
+
+      store = {
+        ...store,
+        isDay: isDay === 1 ? 'yes' : 'no',
+        city: name,
+        temp_c: Math.round(temp_c),
+        observationTime,
+        condition: condition.text,
+        properties: {
+          cloud: {
+            title: "cloud",
+            value: `${cloud}%`,
+            icon: getPropertyIcon('cloud'),
+          },
+          humidity: {
+            title: "humidity",
+            value: `${humidity}%`,
+            icon: getPropertyIcon('humidity'),
+          },
+          windSpeed: {
+            title: "wind speed",
+            value: `${windSpeed} km/h`,
+            icon: getPropertyIcon('wind speed'),
+          },
+          pressure: {
+            title: "pressure",
+            value: `${pressure} mb`,
+            icon: getPropertyIcon('pressure'),
+          },
+          uvIndex: {
+            title: "uv Index",
+            value: `${uvIndex} / 10`,
+            icon: getPropertyIcon('uv Index'),
+          },
+          visibility: {
+            title: "visibility",
+            value: `${visibility} km`,
+            icon: getPropertyIcon('visibility'),
+          },
+        }
+      };
+
+      renderComponent();
+    } catch (error) {
+      console.error("Error fetching weather data:", error);
+      root.innerHTML = `<div class="error-message" style="padding: 20px; text-align: center; color: #ff4444;">
+                  Failed to load weather data. Please try again later.
+              </div>`;
+    }
+  };
+
+  const renderProperty = (properties) => {
+    return Object.values(properties).map(({icon, value, title}) => {
+      return `<div class="property">
+                  <div class="property-icon">
+                    ${icon}
+                  </div>
+                  <div class="property-info">
+                    <div class="property-info__value">${value}</div>
+                    <div class="property-info__description">${title}</div>
+                  </div>
+                </div>`;
+    }).join('');
+  };
+
+  const markup = () => {
+    const {city, condition, observationTime, temp_c, isDay, properties} = store;
+
+    const containerClass = isDay === 'yes' ? 'is-day' : '';
+
+    return `<div class="container ${containerClass}">
+                  <div class="top">
+                    <div class="city">
+                      <div class="city-subtitle">Weather Today in</div>
+                        <div class="city-title" id="city">
+                        <span>${city}</span>
+                      </div>
+                    </div>
+                    <div class="city-info">
+                      <div class="top-left">
+                        ${getWeatherIcon(condition)}
+                        <div class="description">${condition}</div>
+                      </div>
+
+                      <div class="top-right">
+                        <div class="city-info__subtitle">as of ${observationTime}</div>
+                        <div class="city-info__title">${temp_c}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div id="properties">${renderProperty(properties)}</div>
+                </div>`;
+  };
+
+  const renderComponent = () => {
+    root.innerHTML = markup();
+  };
+
+  // Add event listeners for the popup form
+  const setupEventListeners = () => {
+    const cityTitleElement = document.getElementById('city');
+    const popupElement = document.getElementById('popup');
+    const closeElement = document.getElementById('close');
+    const formElement = document.getElementById('form');
+    const textInputElement = document.getElementById('text-input');
+
+    if (cityTitleElement) {
+      cityTitleElement.addEventListener('click', () => {
+        popupElement.classList.add('active');
+        textInputElement.focus();
+      });
+    }
+
+    if (closeElement) {
+      closeElement.addEventListener('click', () => {
+        popupElement.classList.remove('active');
+      });
+    }
+
+    if (formElement) {
+      formElement.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const value = textInputElement.value.trim();
+        if (value) {
+          store.city = value;
+          popupElement.classList.remove('active');
+          textInputElement.value = '';
+          fetchData();
+        }
+      });
+    }
+  };
+
+  // Initial data fetch and setup
+  fetchData().then(() => {
+    setupEventListeners();
+  });
+</script>
+</body>
+</html>
